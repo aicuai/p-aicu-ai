@@ -2,7 +2,9 @@
 
 **Point, Profile, Post** - AICU会員ポータル
 
-🌐 https://p.aicu.jp
+🌐 **本番URL**: https://p.aicu.jp
+
+> **Note**: リポジトリ名 `p-aicu-ai` → デプロイ先 `p.aicu.jp`（GitHub はドットを許可しないため）
 
 ## 概要
 
