@@ -17,7 +17,8 @@
     "@wix/members": "^1.0.0",
     "@wix/loyalty": "^1.0.0",
     "stripe": "^14.0.0",
-    "next-auth": "^5.0.0"
+    "next-auth": "5.0.0-beta.30",
+    "@aicujp/ui": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

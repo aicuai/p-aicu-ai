@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import Providers from '@/components/Providers'
+import '@aicujp/ui/styles'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -13,8 +15,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="min-h-screen bg-gray-50">
-        {children}
+      <body className="min-h-screen bg-gray-950 text-white">
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
