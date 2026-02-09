@@ -19,7 +19,7 @@ export default async function Home() {
         </div>
 
         {/* Login Card */}
-        <div className="rounded-2xl p-6 space-y-5 bg-white/5 border border-white/10">
+        <div className="rounded-2xl p-6 space-y-5 bg-gray-800 border border-gray-700">
           <div className="text-center">
             <h2 className="text-lg font-semibold text-white">ログイン</h2>
             <p className="mt-1 text-sm text-gray-400">
@@ -61,11 +61,11 @@ export default async function Home() {
           ].map((f) => (
             <div
               key={f.title}
-              className="p-3 rounded-xl bg-white/5 border border-white/10"
+              className="p-3 rounded-xl bg-gray-800 border border-gray-700"
             >
               <div className="text-xl mb-1">{f.icon}</div>
               <div className="text-xs font-medium text-white">{f.title}</div>
-              <div className="text-[10px] text-gray-500">{f.desc}</div>
+              <div className="text-[10px] text-gray-400">{f.desc}</div>
             </div>
           ))}
         </div>

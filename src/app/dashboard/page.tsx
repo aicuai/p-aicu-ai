@@ -11,7 +11,7 @@ export default async function Dashboard() {
   return (
     <main className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-900/80 backdrop-blur-md border-b border-white/10">
+      <header className="sticky top-0 z-40 bg-gray-900 border-b border-gray-700">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-bold text-white">
             AICU <span className="text-aicu-primary">Portal</span>
@@ -42,7 +42,7 @@ export default async function Dashboard() {
         </div>
 
         {/* Profile */}
-        <div className="rounded-xl p-5 bg-white/5 border border-white/10">
+        <div className="rounded-xl p-5 bg-gray-800 border border-gray-700">
           <h2 className="text-base font-semibold text-white mb-3">プロフィール</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -61,7 +61,7 @@ export default async function Dashboard() {
         </div>
 
         {/* Membership */}
-        <div className="rounded-xl p-5 bg-white/5 border border-white/10">
+        <div className="rounded-xl p-5 bg-gray-800 border border-gray-700">
           <h2 className="text-base font-semibold text-white mb-3">会員プラン</h2>
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">現在のプラン</span>
