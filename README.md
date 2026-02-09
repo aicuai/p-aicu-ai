@@ -1,10 +1,10 @@
-# p-aicu-ai
+# p-aicujp
 
 **Point, Profile, Post** - AICU会員ポータル
 
 🌐 **本番URL**: https://p.aicu.jp
 
-> **Note**: リポジトリ名 `p-aicu-ai` → デプロイ先 `p.aicu.jp`（GitHub はドットを許可しないため）
+> 日本語コミュニティ・サービス向けは `-aicujp` サフィックス / `.jp` ドメインを使用。
 
 ## 概要
 
@@ -46,7 +46,7 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 
 Vercelにデプロイ:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/aicuai/p-aicu-ai)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/aicuai/p-aicujp)
 
 ## ライセンス
 

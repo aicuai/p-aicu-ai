@@ -7,13 +7,13 @@
 
 | 項目 | 値 |
 |------|-----|
-| **リポジトリ** | [aicuai/p-aicu-ai](https://github.com/aicuai/p-aicu-ai) |
+| **リポジトリ** | [aicuai/p-aicujp](https://github.com/aicuai/p-aicujp) |
 | **デプロイ先** | `p.aicu.jp` |
 | **ホスティング** | Vercel |
 | **コンセプト** | **P**oint, **P**rofile, **P**ost（3P） |
 
-> **命名について**: GitHub はリポジトリ名にドットを許可しないため `p-aicu-ai` としている。
-> デプロイ先ドメインは `p.aicu.jp`（AICU Portal の略）。
+> **命名規則**: 日本語コミュニティ・サービス向けは `.jp` ドメイン / `-aicujp` サフィックスを使用。
+> 国際サービスとは明確に分離する方針。
 
 ---
 
@@ -726,7 +726,7 @@ NEXTAUTH_URL=https://p.aicu.jp
 ## 関連リソース
 
 ### 内部リソース
-- **リポジトリ**: https://github.com/aicuai/p-aicu-ai
+- **リポジトリ**: https://github.com/aicuai/p-aicujp
 - **経営会議Issue**: https://github.com/aicuai/japan-corp/issues/124
 - **aicujp-portal**: https://github.com/aicuai/aicujp-portal （Docusaurus + Stripe + Membership）
 - **aicujp-wix**: https://github.com/aicuai/aicujp-wix （Wix Velo コード）
