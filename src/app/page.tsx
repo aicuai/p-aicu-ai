@@ -80,9 +80,14 @@ export default async function Home() {
         </div>
 
         {/* Footer */}
-        <p className="animate-in-delay-3" style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", marginTop: 32 }}>
-          &copy; 2026 AICU Japan Inc.
-        </p>
+        <footer className="animate-in-delay-3" style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", marginTop: 32, display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+            <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>プライバシーポリシー</a>
+            <a href="https://www.aicu.blog/terms/plan-free" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>利用規約</a>
+            <a href="https://www.aicu.blog/terms/legal" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>法的免責事項</a>
+          </div>
+          <p>&copy; 2026 AICU Japan Inc.</p>
+        </footer>
       </div>
     </main>
   )

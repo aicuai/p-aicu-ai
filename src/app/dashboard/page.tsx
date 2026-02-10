@@ -4,15 +4,15 @@ import SignOutButton from "./SignOutButton"
 import LinkWixForm from "./LinkWixForm"
 import { getUserByEmail } from "@/lib/supabase"
 import { getContactByEmail, getLoyaltyByContactId, getMemberByContactId } from "@/lib/wix"
-
-const SUPERUSER_EMAIL = "shirai@mail.com"
+import { SUPERUSER_EMAILS } from "@/lib/constants"
+import Link from "next/link"
 
 export default async function Dashboard() {
   const user = await getUser()
   if (!user) redirect("/")
 
   const email = user.email ?? null
-  const isSuperuser = email === SUPERUSER_EMAIL
+  const isSuperuser = !!email && SUPERUSER_EMAILS.includes(email)
 
   // Wix データ取得
   let points: number | null = null
@@ -182,6 +182,30 @@ export default async function Dashboard() {
             </div>
           )}
 
+          {/* Admin Dashboard Link */}
+          {isSuperuser && (
+            <Link
+              href="/dashboard/admin"
+              className="card card-hover animate-in-delay-3"
+              style={{ padding: 20, display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}
+            >
+              <div>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>管理者ダッシュボード</h2>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>KPI・ユーザー統計</p>
+              </div>
+              <span style={{
+                padding: "6px 14px",
+                background: "linear-gradient(135deg, var(--aicu-teal), var(--aicu-teal-dark))",
+                color: "#fff",
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+              }}>
+                Admin
+              </span>
+            </Link>
+          )}
+
           {/* Discord Community */}
           <a
             href="https://j.aicu.ai/JoinDiscord"
@@ -210,9 +234,14 @@ export default async function Dashboard() {
       </div>
 
       {/* Footer */}
-      <div style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", padding: "16px" }}>
-        &copy; 2026 AICU Japan Inc.
-      </div>
+      <footer style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", padding: "16px", display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+          <a href="https://corp.aicu.ai/ja/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>プライバシーポリシー</a>
+          <a href="https://www.aicu.blog/terms/plan-free" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>利用規約</a>
+          <a href="https://www.aicu.blog/terms/legal" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>法的免責事項</a>
+        </div>
+        <p>&copy; 2026 AICU Japan Inc.</p>
+      </footer>
     </main>
   )
 }

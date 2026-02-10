@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifySupabaseToken } from "@/lib/push"
 import { createClient } from "@supabase/supabase-js"
-
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL
+import { notifySlack } from "@/lib/slack"
 
 export async function POST(req: NextRequest) {
   const userId = await verifySupabaseToken(req.headers.get("authorization"))
@@ -46,18 +45,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Notify Slack if DOB changed
-  if (dobChanged && SLACK_WEBHOOK_URL) {
-    try {
-      await fetch(SLACK_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: `⚠️ DOB変更検知\nUser: ${userId}\n旧: ${oldDob}\n新: ${date_of_birth}`,
-        }),
-      })
-    } catch (err) {
-      console.error("Slack notification failed:", err)
-    }
+  if (dobChanged) {
+    await notifySlack(
+      `⚠️ DOB変更検知\nUser: ${userId}\n旧: ${oldDob}\n新: ${date_of_birth}`,
+    )
   }
 
   return NextResponse.json({ ok: true, dob_changed: !!dobChanged })

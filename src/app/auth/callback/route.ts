@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { getOrCreateUserByEmail, linkWixContactByEmail } from "@/lib/supabase"
 import { getContactByEmail, getMemberByContactId } from "@/lib/wix"
+import { notifySlack } from "@/lib/slack"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
 
     // メールで Wix Contact 自動リンク + unified_users UPSERT
     const email = data.user?.email
+    let wixLinked = false
     if (email) {
       try {
         await getOrCreateUserByEmail(email, data.user?.user_metadata?.full_name ?? null)
@@ -47,10 +49,17 @@ export async function GET(request: NextRequest) {
         if (contact?._id) {
           const member = await getMemberByContactId(contact._id)
           await linkWixContactByEmail(email, contact._id, member?._id ?? null)
+          wixLinked = true
         }
       } catch (e) {
         console.error("[auth/callback] Wix link error:", e)
       }
+
+      // Slack ログイン通知
+      const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+      await notifySlack(
+        `✅ ログイン: ${email}\nProvider: ${data.user?.app_metadata?.provider ?? "email"}\nTime: ${now}\nWix: ${wixLinked ? "連携済み" : "未連携"}`,
+      )
     }
 
     return response

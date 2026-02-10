@@ -7,7 +7,7 @@ import {
   removeSubscription,
 } from "@/lib/push"
 
-const SUPERUSER_EMAILS = ["shirai@mail.com", "aki@aicu.ai"]
+import { SUPERUSER_EMAILS } from "@/lib/constants"
 
 export async function POST(req: NextRequest) {
   // Verify the sender is a superuser via Supabase auth

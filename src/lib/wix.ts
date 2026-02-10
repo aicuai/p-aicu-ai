@@ -23,6 +23,13 @@ function getWixClient() {
   return _wixClient
 }
 
+/** Wix Contact の総数を取得 */
+export async function getTotalContactsCount(): Promise<number> {
+  const result = await getWixClient().contacts.queryContacts({ paging: { limit: 1 } })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (result as any).totalResults ?? (result as any).contacts?.length ?? 0
+}
+
 /** メールアドレスで Wix Contact を検索 */
 export async function getContactByEmail(email: string) {
   // queryContacts の search はメール完全一致検索に対応

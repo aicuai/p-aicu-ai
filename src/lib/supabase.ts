@@ -32,7 +32,7 @@ export async function createServerSupabase() {
 // ─── 3. 管理用 (service key, バックエンド処理用) ───
 let _adminSupabase: SupabaseClient | null = null
 
-function getAdminSupabase() {
+export function getAdminSupabase() {
   if (!_adminSupabase) {
     _adminSupabase = createClient(
       process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL!,

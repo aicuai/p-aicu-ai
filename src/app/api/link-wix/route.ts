@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { getContactByEmail, getMemberByContactId } from "@/lib/wix"
 import { linkWixContactByEmail } from "@/lib/supabase"
-
-const SUPERUSER_EMAIL = "shirai@mail.com"
+import { SUPERUSER_EMAILS } from "@/lib/constants"
 
 export async function POST(req: NextRequest) {
   // Supabase Auth からユーザー取得
@@ -26,7 +25,7 @@ export async function POST(req: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user?.email || user.email !== SUPERUSER_EMAIL) {
+  if (!user?.email || !SUPERUSER_EMAILS.includes(user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }
 
