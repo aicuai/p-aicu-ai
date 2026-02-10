@@ -1,24 +1,24 @@
-import { auth } from "@/lib/auth"
+import { getUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import SignOutButton from "./SignOutButton"
 import LinkWixForm from "./LinkWixForm"
-import { getUserByDiscordId } from "@/lib/supabase"
-import { getLoyaltyByContactId, getMemberByContactId } from "@/lib/wix"
+import { getUserByEmail } from "@/lib/supabase"
+import { getContactByEmail, getLoyaltyByContactId, getMemberByContactId } from "@/lib/wix"
 
 const SUPERUSER_EMAIL = "shirai@mail.com"
 
 export default async function Dashboard() {
-  const session = await auth()
-  if (!session?.user) redirect("/")
+  const user = await getUser()
+  if (!user) redirect("/")
 
-  const user = session.user
-
-  const isSuperuser = user.email === SUPERUSER_EMAIL
+  const email = user.email ?? null
+  const isSuperuser = email === SUPERUSER_EMAIL
 
   // Wix データ取得
   let points: number | null = null
   let wixLinked = false
   let unifiedUserId: string | null = null
+  let discordLinked = false
   let wixProfile: {
     firstName?: string | null
     lastName?: string | null
@@ -28,10 +28,10 @@ export default async function Dashboard() {
   } | null = null
 
   try {
-    if (user.discord_id) {
-      const unifiedUser = await getUserByDiscordId(user.discord_id)
-
+    if (email) {
+      const unifiedUser = await getUserByEmail(email)
       unifiedUserId = unifiedUser?.id ?? null
+      discordLinked = !!unifiedUser?.discord_id
 
       if (unifiedUser?.wix_contact_id) {
         wixLinked = true
@@ -53,11 +53,33 @@ export default async function Dashboard() {
             nickname: member.profile?.nickname,
           }
         }
+      } else {
+        // unified_users に Wix リンクがなくても、メールで直接検索を試みる
+        const contact = await getContactByEmail(email)
+        if (contact?._id) {
+          wixLinked = true
+          const loyalty = await getLoyaltyByContactId(contact._id)
+          if (loyalty?.points) {
+            points = loyalty.points.balance ?? 0
+          }
+          const member = await getMemberByContactId(contact._id)
+          if (member) {
+            wixProfile = {
+              firstName: member.contact?.firstName,
+              lastName: member.contact?.lastName,
+              company: member.contact?.company,
+              profilePhoto: member.profile?.photo?.url,
+              nickname: member.profile?.nickname,
+            }
+          }
+        }
       }
     }
   } catch (e) {
     console.error("[dashboard] Wix data fetch error:", e)
   }
+
+  const displayName = wixProfile?.nickname ?? wixProfile?.firstName ?? user.user_metadata?.full_name ?? email ?? "User"
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -73,15 +95,8 @@ export default async function Dashboard() {
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {user.image && (
-              <img
-                src={user.image}
-                alt=""
-                style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--border)" }}
-              />
-            )}
-            <span style={{ fontSize: 13, color: "var(--text-secondary)", display: "none" }} className="sm:!inline">
-              {user.name}
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              {displayName}
             </span>
             <SignOutButton />
           </div>
@@ -124,10 +139,14 @@ export default async function Dashboard() {
           <div className="card animate-in-delay" style={{ padding: 20 }}>
             <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>プロフィール</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <ProfileRow label="名前" value={wixProfile?.nickname ?? wixProfile?.firstName ?? user.name ?? "—"} />
+              <ProfileRow label="名前" value={displayName} />
               {wixProfile?.company && <ProfileRow label="会社" value={wixProfile.company} />}
-              <ProfileRow label="メール" value={user.email ?? "未設定"} />
-              <ProfileRow label="Discord" value="連携済み" valueColor="#34c759" />
+              <ProfileRow label="メール" value={email ?? "未設定"} />
+              <ProfileRow
+                label="Discord"
+                value={discordLinked ? "連携済み" : "未連携"}
+                valueColor={discordLinked ? "#34c759" : "#ff9500"}
+              />
               <ProfileRow
                 label="Wix"
                 value={wixLinked ? "連携済み" : "未連携"}
@@ -150,9 +169,9 @@ export default async function Dashboard() {
             <div className="card animate-in-delay-2" style={{ padding: 20, border: "1px solid rgba(239, 68, 68, 0.15)" }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, color: "#ef4444", marginBottom: 12 }}>Super User</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, fontFamily: "monospace", color: "var(--text-tertiary)" }}>
-                <p>discord_id: {user.discord_id ?? "—"}</p>
-                <p>email: {user.email ?? "—"}</p>
+                <p>email: {email ?? "—"}</p>
                 <p>unified_user_id: {unifiedUserId ?? "—"}</p>
+                <p>discord_linked: {discordLinked ? "yes" : "no"}</p>
               </div>
               {!wixLinked && (
                 <div style={{ marginTop: 12 }}>

@@ -1,64 +1,40 @@
-import NextAuth from "next-auth"
-import { getOrCreateUser, linkWixContact } from "@/lib/supabase"
-import { getContactByEmail, getMemberByContactId } from "@/lib/wix"
-import authConfig from "./auth.config"
+"use server"
 
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id?: string
-      name?: string | null
-      email?: string | null
-      image?: string | null
-      discord_id?: string
-    }
-  }
+import { createServerSupabase } from "@/lib/supabase"
+import { redirect } from "next/navigation"
+
+/** サーバーコンポーネント用: 認証ユーザー取得 */
+export async function getUser() {
+  const supabase = await createServerSupabase()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig,
-  callbacks: {
-    ...authConfig.callbacks,
+/** サーバーアクション: メールマジックリンクでログイン */
+export async function signInWithEmail(formData: FormData) {
+  const email = formData.get("email") as string
+  if (!email) return { error: "メールアドレスを入力してください" }
 
-    async signIn({ user, account }) {
-      if (account?.provider !== "discord") return true
+  const supabase = await createServerSupabase()
 
-      const discordId = account.providerAccountId
-      const email = user.email ?? null
-      const name = user.name ?? null
-
-      try {
-        // Supabase に unified_users を UPSERT
-        await getOrCreateUser(discordId, email, name)
-
-        // Discord メールで Wix Contact を検索し、自動リンク
-        if (email) {
-          const contact = await getContactByEmail(email)
-          if (contact?._id) {
-            const member = await getMemberByContactId(contact._id)
-            await linkWixContact(discordId, contact._id, member?._id ?? null)
-          }
-        }
-      } catch (e) {
-        // Wix/Supabase 連携失敗でもログイン自体はブロックしない
-        console.error("[auth] signIn link error:", e)
-      }
-
-      return true
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3200"
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${siteUrl}/auth/callback`,
     },
+  })
 
-    async jwt({ token, account }) {
-      if (account?.provider === "discord") {
-        token.discord_id = account.providerAccountId
-      }
-      return token
-    },
+  if (error) {
+    return { error: error.message }
+  }
 
-    async session({ session, token }) {
-      if (token.discord_id) {
-        session.user.discord_id = token.discord_id as string
-      }
-      return session
-    },
-  },
-})
+  redirect("/auth/verify-request")
+}
+
+/** サーバーアクション: サインアウト */
+export async function signOut() {
+  const supabase = await createServerSupabase()
+  await supabase.auth.signOut()
+  redirect("/")
+}

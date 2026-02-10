@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { createServerClient } from "@supabase/ssr"
 import { getContactByEmail, getMemberByContactId } from "@/lib/wix"
-import { linkWixContact } from "@/lib/supabase"
+import { linkWixContactByEmail } from "@/lib/supabase"
 
 const SUPERUSER_EMAIL = "shirai@mail.com"
 
 export async function POST(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.discord_id || session.user.email !== SUPERUSER_EMAIL) {
+  // Supabase Auth からユーザー取得
+  const response = NextResponse.next()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          )
+        },
+      },
+    },
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user?.email || user.email !== SUPERUSER_EMAIL) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }
 
@@ -31,13 +50,13 @@ export async function POST(req: NextRequest) {
     // Member がいなくても OK
   }
 
-  // unified_users にリンク
-  const user = await linkWixContact(session.user.discord_id, contact._id, memberId)
+  // unified_users にリンク（メールベース）
+  const linkedUser = await linkWixContactByEmail(user.email, contact._id, memberId)
 
   return NextResponse.json({
     success: true,
     wix_contact_id: contact._id,
     wix_member_id: memberId,
-    user,
+    user: linkedUser,
   })
 }
