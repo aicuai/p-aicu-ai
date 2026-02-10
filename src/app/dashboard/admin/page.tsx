@@ -2,7 +2,7 @@ import { getUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { SUPERUSER_EMAILS } from "@/lib/constants"
 import { getAdminSupabase } from "@/lib/supabase"
-import { getTotalContactsCount, getTotalMembersCount } from "@/lib/wix"
+import { getTotalContactsCount, getTotalMembersCount, getSubscriptionStats } from "@/lib/wix"
 import Link from "next/link"
 
 export default async function AdminDashboard() {
@@ -51,10 +51,12 @@ export default async function AdminDashboard() {
 
   let wixTotalContacts = 0
   let wixTotalMembers = 0
+  let subscriptionStats: { total: number; byPlanAndStatus: Record<string, Record<string, number>> } = { total: 0, byPlanAndStatus: {} }
   try {
-    ;[wixTotalContacts, wixTotalMembers] = await Promise.all([
+    ;[wixTotalContacts, wixTotalMembers, subscriptionStats] = await Promise.all([
       getTotalContactsCount(),
       getTotalMembersCount(),
+      getSubscriptionStats(),
     ])
   } catch (e) {
     console.error("[admin] Wix count error:", e)
@@ -155,6 +157,35 @@ export default async function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Subscriptions */}
+          {subscriptionStats.total > 0 && (
+            <div className="card animate-in-delay-2" style={{ padding: 20 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>サブスクリプション</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {Object.entries(subscriptionStats.byPlanAndStatus).map(([planName, statuses]) => {
+                  const active = statuses["ACTIVE"] || 0
+                  const canceled = statuses["CANCELED"] || 0
+                  const other = Object.entries(statuses).filter(([s]) => s !== "ACTIVE" && s !== "CANCELED").reduce((sum, [, n]) => sum + n, 0)
+                  return (
+                    <div key={planName}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 4 }}>
+                        <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{planName}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 8, fontSize: 12 }}>
+                        {active > 0 && <span style={{ color: "var(--aicu-teal)", fontWeight: 600 }}>有効 {active}</span>}
+                        {canceled > 0 && <span style={{ color: "#ef4444" }}>解約 {canceled}</span>}
+                        {other > 0 && <span style={{ color: "var(--text-tertiary)" }}>他 {other}</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+                  ※ Wix API制限により最新50件のみ表示
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Recent Logins */}
           <div className="card animate-in-delay-3" style={{ padding: 20 }}>

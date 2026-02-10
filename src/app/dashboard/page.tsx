@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import SignOutButton from "./SignOutButton"
 import LinkWixForm from "./LinkWixForm"
 import { getUserByEmail } from "@/lib/supabase"
-import { getContactByEmail, getLoyaltyByContactId, getMemberByContactId } from "@/lib/wix"
+import { getContactByEmail, getLoyaltyByContactId, getMemberByContactId, getActiveSubscriptions, getAllSubscriptions, type WixSubscription } from "@/lib/wix"
 import { SUPERUSER_EMAILS } from "@/lib/constants"
 import Link from "next/link"
 
@@ -26,6 +26,8 @@ export default async function Dashboard() {
     profilePhoto?: string | null
     nickname?: string | null
   } | null = null
+  let activeSubscriptions: WixSubscription[] = []
+  let allSubscriptions: WixSubscription[] = []
 
   try {
     if (email) {
@@ -42,7 +44,7 @@ export default async function Dashboard() {
           points = loyalty.points.balance ?? 0
         }
 
-        // プロフィール取得
+        // プロフィール・サブスクリプション取得
         const member = await getMemberByContactId(unifiedUser.wix_contact_id)
         if (member) {
           wixProfile = {
@@ -51,6 +53,12 @@ export default async function Dashboard() {
             company: member.contact?.company,
             profilePhoto: member.profile?.photo?.url,
             nickname: member.profile?.nickname,
+          }
+          if (member._id) {
+            activeSubscriptions = await getActiveSubscriptions(member._id)
+            if (isSuperuser) {
+              allSubscriptions = await getAllSubscriptions(member._id)
+            }
           }
         }
       } else {
@@ -70,6 +78,12 @@ export default async function Dashboard() {
               company: member.contact?.company,
               profilePhoto: member.profile?.photo?.url,
               nickname: member.profile?.nickname,
+            }
+            if (member._id) {
+              activeSubscriptions = await getActiveSubscriptions(member._id)
+              if (isSuperuser) {
+                allSubscriptions = await getAllSubscriptions(member._id)
+              }
             }
           }
         }
@@ -155,14 +169,52 @@ export default async function Dashboard() {
             </div>
           </div>
 
-          {/* Membership */}
+          {/* Membership / Subscriptions */}
           <div className="card animate-in-delay-2" style={{ padding: 20 }}>
             <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>会員プラン</h2>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-              <span style={{ color: "var(--text-secondary)" }}>現在のプラン</span>
-              <span style={{ color: "var(--aicu-teal)", fontWeight: 600 }}>Free</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {activeSubscriptions.length > 0 ? (
+                activeSubscriptions.map((sub, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
+                    <span style={{ color: "var(--text-secondary)" }}>{sub.planName}</span>
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      background: "rgba(65, 201, 180, 0.12)",
+                      color: "var(--aicu-teal)",
+                    }}>有効</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                  <span style={{ color: "var(--text-secondary)" }}>現在のプラン</span>
+                  <span style={{ color: "var(--text-tertiary)" }}>なし</span>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Subscription History (superuser only) */}
+          {isSuperuser && allSubscriptions.length > 0 && (
+            <div className="card animate-in-delay-2" style={{ padding: 20, border: "1px solid rgba(99, 102, 241, 0.15)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#6366f1", marginBottom: 12 }}>サブスクリプション履歴</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {allSubscriptions.map((sub, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "4px 0", borderBottom: i < allSubscriptions.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{sub.planName}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                        {sub.startDate ? new Date(sub.startDate).toLocaleDateString("ja-JP") : "?"} → {sub.endDate ? new Date(sub.endDate).toLocaleDateString("ja-JP") : "継続中"}
+                      </span>
+                    </div>
+                    <SubStatusBadge status={sub.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Superuser Panel */}
           {isSuperuser && (
@@ -243,6 +295,19 @@ export default async function Dashboard() {
         <p>&copy; 2026 AICU Japan Inc.</p>
       </footer>
     </main>
+  )
+}
+
+function SubStatusBadge({ status }: { status: string }) {
+  const isActive = status === "ACTIVE"
+  const isCanceled = status === "CANCELED"
+  const bg = isActive ? "rgba(65, 201, 180, 0.12)" : isCanceled ? "rgba(239, 68, 68, 0.08)" : "rgba(0, 0, 0, 0.04)"
+  const color = isActive ? "var(--aicu-teal)" : isCanceled ? "#ef4444" : "var(--text-tertiary)"
+  const label = isActive ? "有効" : isCanceled ? "解約" : status
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: bg, color, whiteSpace: "nowrap" }}>
+      {label}
+    </span>
   )
 }
 

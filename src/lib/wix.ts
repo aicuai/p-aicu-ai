@@ -1,6 +1,7 @@
 import { createClient, ApiKeyStrategy } from "@wix/sdk"
 import { members } from "@wix/members"
 import { accounts } from "@wix/loyalty"
+import { orders, plans } from "@wix/pricing-plans"
 import * as contactsPublic from "@wix/contacts/build/cjs/src/contacts-v4-contact.public"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,6 +18,8 @@ function getWixClient() {
         contacts: contactsPublic,
         members,
         accounts,
+        orders,
+        plans,
       },
     })
   }
@@ -54,6 +57,63 @@ export async function getMemberByContactId(contactId: string) {
     .eq("contactId", contactId)
     .find()
   return result.items?.[0] ?? null
+}
+
+// ─── Subscription types ───
+export type WixSubscription = {
+  planName: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+}
+
+/** memberId で現在のアクティブなサブスクリプションを取得 */
+export async function getActiveSubscriptions(memberId: string): Promise<WixSubscription[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (getWixClient().orders as any).managementListOrders({
+    buyerIds: [memberId],
+    orderStatuses: ["ACTIVE"],
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (result.orders || []).map((o: any) => ({
+    planName: o.planName ?? "?",
+    status: o.status ?? "UNKNOWN",
+    startDate: o.startDate ?? null,
+    endDate: o.endDate ?? null,
+  }))
+}
+
+/** memberId でキャンセル・期限切れ含む全サブスクリプション履歴を取得 */
+export async function getAllSubscriptions(memberId: string): Promise<WixSubscription[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (getWixClient().orders as any).managementListOrders({
+    buyerIds: [memberId],
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (result.orders || []).map((o: any) => ({
+    planName: o.planName ?? "?",
+    status: o.status ?? "UNKNOWN",
+    startDate: o.startDate ?? null,
+    endDate: o.endDate ?? null,
+  }))
+}
+
+/** 管理用: 全サブスクリプションのサマリーを取得 */
+export async function getSubscriptionStats() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (getWixClient().orders as any).managementListOrders()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allOrders = (result.orders || []) as any[]
+
+  const byPlanAndStatus: Record<string, Record<string, number>> = {}
+  for (const o of allOrders) {
+    const plan = o.planName ?? "?"
+    const status = o.status ?? "UNKNOWN"
+    if (!byPlanAndStatus[plan]) byPlanAndStatus[plan] = {}
+    byPlanAndStatus[plan][status] = (byPlanAndStatus[plan][status] || 0) + 1
+  }
+
+  return { total: allOrders.length, byPlanAndStatus }
 }
 
 /** contactId から Loyalty アカウント（ポイント情報）を取得 */
