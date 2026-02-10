@@ -27,7 +27,8 @@ function getWixClient() {
 export async function getTotalContactsCount(): Promise<number> {
   const result = await getWixClient().contacts.queryContacts({ paging: { limit: 1 } })
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (result as any).totalResults ?? (result as any).contacts?.length ?? 0
+  const meta = (result as any).pagingMetadata
+  return meta?.total ?? meta?.count ?? 0
 }
 
 /** メールアドレスで Wix Contact を検索 */
