@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getUser } from "@/lib/auth"
 import { getAdminSupabase } from "@/lib/supabase"
 import { SUPERUSER_EMAILS } from "@/lib/constants"
-import { getTotalContactsCount } from "@/lib/wix"
+import { getTotalContactsCount, getTotalMembersCount } from "@/lib/wix"
 
 export async function GET() {
   // Auth check
@@ -61,12 +61,16 @@ export async function GET() {
   const profilesCount = profilesResult.count ?? 0
   const pushSubsCount = pushSubsResult.count ?? 0
 
-  // Wix total contacts (may fail if Wix not configured)
+  // Wix counts (may fail if Wix not configured)
   let wixTotalContacts = 0
+  let wixTotalMembers = 0
   try {
-    wixTotalContacts = await getTotalContactsCount()
+    ;[wixTotalContacts, wixTotalMembers] = await Promise.all([
+      getTotalContactsCount(),
+      getTotalMembersCount(),
+    ])
   } catch (e) {
-    console.error("[admin/stats] Wix contacts count error:", e)
+    console.error("[admin/stats] Wix count error:", e)
   }
 
   const safeRate = (n: number, d: number) => d > 0 ? Math.round((n / d) * 1000) / 10 : 0
@@ -91,6 +95,7 @@ export async function GET() {
       new_users_7d: newUsers7d,
     },
     wix: {
+      total_members: wixTotalMembers,
       total_contacts: wixTotalContacts,
     },
     recent_logins: recentLoginsResult.data ?? [],

@@ -31,6 +31,12 @@ export async function getTotalContactsCount(): Promise<number> {
   return meta?.total ?? meta?.count ?? 0
 }
 
+/** Wix サイト会員の総数を取得 */
+export async function getTotalMembersCount(): Promise<number> {
+  const result = await getWixClient().members.queryMembers().limit(1).find()
+  return result.totalCount ?? result.items?.length ?? 0
+}
+
 /** メールアドレスで Wix Contact を検索 */
 export async function getContactByEmail(email: string) {
   // queryContacts の search はメール完全一致検索に対応

@@ -2,7 +2,7 @@ import { getUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { SUPERUSER_EMAILS } from "@/lib/constants"
 import { getAdminSupabase } from "@/lib/supabase"
-import { getTotalContactsCount } from "@/lib/wix"
+import { getTotalContactsCount, getTotalMembersCount } from "@/lib/wix"
 import Link from "next/link"
 
 export default async function AdminDashboard() {
@@ -50,10 +50,14 @@ export default async function AdminDashboard() {
   const pushSubsCount = pushSubsResult.count ?? 0
 
   let wixTotalContacts = 0
+  let wixTotalMembers = 0
   try {
-    wixTotalContacts = await getTotalContactsCount()
+    ;[wixTotalContacts, wixTotalMembers] = await Promise.all([
+      getTotalContactsCount(),
+      getTotalMembersCount(),
+    ])
   } catch (e) {
-    console.error("[admin] Wix contacts count error:", e)
+    console.error("[admin] Wix count error:", e)
   }
 
   const safeRate = (n: number, d: number) => d > 0 ? Math.round((n / d) * 1000) / 10 : 0
@@ -114,8 +118,12 @@ export default async function AdminDashboard() {
             <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>Wix 連携状況</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "var(--text-secondary)" }}>Wix 全会員</span>
-                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{wixTotalContacts}人</span>
+                <span style={{ color: "var(--text-secondary)" }}>Wix サイト会員</span>
+                <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{wixTotalMembers}人</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                <span style={{ color: "var(--text-secondary)" }}>Wix 連絡先（全体）</span>
+                <span style={{ fontWeight: 500, color: "var(--text-tertiary)" }}>{wixTotalContacts}人</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span style={{ color: "var(--text-secondary)" }}>アプリ登録者</span>
@@ -129,11 +137,11 @@ export default async function AdminDashboard() {
               <div style={{ marginTop: 4 }}>
                 <div style={{ display: "flex", fontSize: 11, color: "var(--text-tertiary)", marginBottom: 4, justifyContent: "space-between" }}>
                   <span>連携済み {wixRate}%</span>
-                  <span>Wix全体の {wixTotalContacts > 0 ? safeRate(wixLinked, wixTotalContacts) : 0}%</span>
+                  <span>会員全体の {wixTotalMembers > 0 ? safeRate(wixLinked, wixTotalMembers) : 0}%</span>
                 </div>
                 <div style={{ height: 8, borderRadius: 4, background: "var(--border)", overflow: "hidden", display: "flex" }}>
                   <div style={{
-                    width: `${wixTotalContacts > 0 ? safeRate(wixLinked, wixTotalContacts) : 0}%`,
+                    width: `${wixTotalMembers > 0 ? safeRate(wixLinked, wixTotalMembers) : 0}%`,
                     background: "var(--aicu-teal)",
                     borderRadius: 4,
                     transition: "width 0.5s ease",
