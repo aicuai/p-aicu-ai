@@ -125,8 +125,13 @@ export default async function AdminDashboard() {
                 <span style={{ color: "var(--text-secondary)" }}>Wix 連絡先（全体）</span>
                 <span style={{ fontWeight: 500, color: "var(--text-tertiary)" }}>{wixTotalContacts}人</span>
               </div>
+              {/* Breakdown note */}
+              <div style={{ background: "var(--aicu-teal-light)", borderRadius: "var(--radius-sm)", padding: "10px 12px", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                <p style={{ fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>差分 {wixTotalContacts - wixTotalMembers}人の内訳</p>
+                <p>サイト会員ではない連絡先（ゲスト購入、フォーム送信、アプリ経由の問い合わせ、自動生成の空レコード等）。Wix ダッシュボード &gt; 顧客・リード管理で「非会員」フィルタで確認可。</p>
+              </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                <span style={{ color: "var(--text-secondary)" }}>アプリ登録者</span>
+                <span style={{ color: "var(--text-secondary)" }}>p.aicu.jp 登録者</span>
                 <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{totalUsers}人</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
