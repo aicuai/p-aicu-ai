@@ -7,11 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **p-aicujp** — AICU会員ポータル (Point, Profile, Post) at `p.aicu.jp`
 
 3つのコア機能 (3P):
-- **Point** (最優先): AICUポイント残高・履歴 — Wix Loyalty API連携
-- **Profile** (Phase 2): Discord OAuth認証、Wix会員紐付け、Stripe決済状態
-- **Post** (Phase 3): Discord Bot告知・スケジュール投稿
+- **Point** (実装済み): AICUポイント残高 — Wix Loyalty API連携
+- **Profile** (実装済み): メール認証、Wix会員紐付け、サブスクリプション表示
+- **Admin** (実装済み): 管理者ダッシュボード（KPI、Wix連携状況、サブスク統計）
+- **Post** (Phase 3): コミュニティ告知（未実装）
 
-詳細な開発経緯・CEO判断・設計方針は `docs/DEVELOPMENT_CONTEXT.md` を参照。
+詳細は `AGENTS.md` と `docs/site-completion-status.md` を参照。
 
 ## Commands
 
@@ -22,17 +23,23 @@ npm start        # プロダクションサーバー起動
 npm run lint     # ESLint (next lint)
 ```
 
-No test framework is configured yet.
+### Production Verification
+
+```bash
+node scripts/verify-production.mjs   # 本番データ検証 (15項目)
+```
+
+Wix会員数、Supabaseテーブル、GA4タグ、API認証を自動チェック。`.env.local` の認証情報を使用。
 
 ## Tech Stack
 
 - **Next.js 15** (App Router) + **React 19** + **TypeScript** (strict mode)
 - **Tailwind CSS 3.4** with custom AICU color tokens
-- **Supabase Auth** (`@supabase/ssr`) — Email magic link (primary), Discord linkable later
-- **@aicujp/ui** — Custom UI component library (Liquid Glass design system)
-- **Wix SDK** (@wix/sdk, @wix/members, @wix/loyalty) — API Key auth (not OAuth)
-- **Stripe** for payments and webhooks
-- **Supabase** for auth + Discord↔Wix user linking
+- **Supabase Auth** (`@supabase/ssr`) — Email magic link (OTP)
+- **Wix SDK** (@wix/sdk, @wix/members, @wix/loyalty, @wix/pricing-plans) — API Key auth
+- **Supabase** for auth + user data (unified_users, profiles, push_subscriptions)
+- **GA4** (G-9Z2S3ZBGEV) — gtag.js via GoogleAnalytics component
+- **Web Push** (VAPID) + **Slack Webhook** for notifications
 - Deployed on **Vercel**
 
 ## Architecture
@@ -53,62 +60,76 @@ Supabase client split:
 - `src/lib/supabase.ts` — Server client (anon key + cookies) + Admin client (service key)
 - `src/lib/auth.ts` — Server actions: getUser(), signInWithEmail(), signOut()
 
+Magic link redirect is dynamic based on request `origin` header (supports both p.aicu.jp and aicu.jp).
+
 ### Integration Flow
 
 ```
 User → Email magic link (Supabase Auth) → Dashboard
-  ├── Points: Email → Supabase (Email↔Wix mapping) → Wix Loyalty API
-  ├── Purchases: Stripe API → purchase history
-  └── Profile: Email user info + Wix member data
+  ├── Points: unified_users.wix_contact_id → Wix Loyalty API
+  ├── Subscriptions: Wix Pricing Plans API → active/historical plans
+  ├── Profile: Wix Member data (name, company, nickname)
+  └── Admin: Supabase queries + Wix API → KPI dashboard
 ```
 
-Supabase acts as a mapping layer (not a monolithic DB). Schema includes `unified_users` and `bonus_points` tables.
+### Key Files
 
-### Current Implementation Status
+| File | Purpose |
+|:-----|:--------|
+| `src/lib/auth.ts` | Supabase Auth server actions |
+| `src/lib/supabase.ts` | Server + Admin Supabase clients |
+| `src/lib/supabase-browser.ts` | Browser Supabase client |
+| `src/lib/wix.ts` | Wix SDK wrapper (contacts, members, loyalty, subscriptions) |
+| `src/lib/constants.ts` | Superuser emails (centralized) |
+| `src/lib/slack.ts` | Slack Webhook integration |
+| `src/lib/push.ts` | Web Push (VAPID) |
+| `src/app/dashboard/page.tsx` | User dashboard (points, profile, subscriptions) |
+| `src/app/dashboard/admin/page.tsx` | Admin dashboard (KPI, Wix stats, recent logins) |
+| `src/components/GoogleAnalytics.tsx` | GA4 gtag.js client component |
 
-Implemented:
-- `src/app/page.tsx` — Login page (email magic link form)
-- `src/app/LoginForm.tsx` — Client component for email input + submit
-- `src/app/auth/callback/route.ts` — Magic link callback (code exchange + Wix auto-link)
-- `src/app/auth/verify-request/page.tsx` — "Check your email" page
-- `src/app/auth/error/page.tsx` — Auth error page
-- `src/app/dashboard/page.tsx` — Dashboard (points, profile, membership)
-- `src/app/dashboard/SignOutButton.tsx` — Client-side logout (Supabase)
-- `src/lib/auth.ts` — Supabase Auth server actions
-- `src/lib/supabase.ts` — Server + Admin Supabase clients
-- `src/lib/supabase-browser.ts` — Browser Supabase client
-- `src/lib/wix.ts` — Wix SDK wrapper
-- `src/middleware.ts` — Supabase Auth route protection
+## Wix SDK Notes
 
-Not yet implemented:
-- `src/lib/stripe.ts` (SDK wrapper)
-- `src/app/dashboard/points/`, `src/app/dashboard/purchases/` (sub-pages)
-- `src/app/api/points/`, `src/app/api/webhook/` (API routes)
-- Discord account linking (from dashboard)
-- `discord-bot/` (Phase 3)
+These patterns are critical when working with Wix APIs:
+
+- `@wix/contacts` has empty index — import from `@wix/contacts/build/cjs/src/contacts-v4-contact.public`
+- `@wix/members`: `client.members.queryMembers()` (NOT `.members.members`)
+- `@wix/loyalty`: `client.accounts.getAccountBySecondaryId({contactId})`
+- `queryMembers()` is a builder: `.eq("contactId", id).find()` → `.items`
+- `queryContacts()` response uses `.contacts` array (not `.items`)
+- Contacts API pagination (offset/cursor) is broken with API Key auth — always returns same 50 records
+- `pagingMetadata.total` is the correct total count field (NOT `totalResults`)
 
 ## Environment Variables
 
 Copy `.env.example` to `.env.local`. Key variables:
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase Auth (client-side)
 - `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` — Supabase admin (server-side)
-- `NEXT_PUBLIC_SITE_URL` — Magic link redirect base URL
-- `WIX_API_KEY` / `WIX_SITE_ID` / `WIX_ACCOUNT_ID` — Wix API Key auth
-- `STRIPE_SECRET_KEY` / `STRIPE_PUBLISHABLE_KEY` / `STRIPE_WEBHOOK_SECRET`
+- `NEXT_PUBLIC_SITE_URL` — Magic link redirect base URL (fallback)
+- `WIX_API_KEY` / `WIX_SITE_ID` — Wix API Key auth
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` — GA4 (G-9Z2S3ZBGEV)
+- `SLACK_WEBHOOK_URL` — Slack notifications
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` — Web Push
 
 ## Conventions
 
 - Path alias: `@/*` maps to `./src/*`
 - UI language: Japanese (`html lang="ja"`)
-- Dark theme: `bg-gray-950` background, white text, gradient body via CSS custom properties
-- Tailwind custom colors: `aicu-primary` (#6366f1), `aicu-secondary` (#8b5cf6), `aicu-accent` (#f59e0b), Discord blue (#5865F2)
-- Liquid Glass design system: CSS variables from `@aicujp/ui/styles` (`--glass-bg`, `--glass-border`, `--glass-blur`, etc.)
-- Server Components by default; `"use client"` only for interactivity (SessionProvider, nav, sign-out)
-- `next.config.ts`: `transpilePackages: ["@aicujp/ui"]`, Discord CDN images allowed
-- Naming: `-aicujp` suffix / `.jp` domain for Japan-specific services
+- Light theme: AICU design system with CSS custom properties (`--aicu-teal`, `--text-primary`, etc.)
+- Server Components by default; `"use client"` only for interactivity
+- Superuser emails centralized in `src/lib/constants.ts`
+- `next.config.ts`: `transpilePackages: ["@aicujp/ui"]`
+
+## Superusers
+
+Defined in `src/lib/constants.ts`:
+- `aki@aicu.ai`
+- `japan-wix@aicu.ai`
+- `shirai@mail.com`
+
+Admin dashboard: https://p.aicu.jp/dashboard/admin
 
 ## Related Repositories
 
 - `japan-corp` — 経営管理 (Issue #124: p.aicu.jp, #116: Wix→Stripe移行)
+- `app-aicujp` — フロントエンドSPA (aicu.jp, Cloudflare Pages)
 - `aicu-ai` — メインサービス
-- `cert.aicu.ai` — 認証サービス
