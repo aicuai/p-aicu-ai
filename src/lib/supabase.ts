@@ -164,6 +164,28 @@ export async function linkWixContact(
   return data as UnifiedUser
 }
 
+// ─── Survey responses ───
+
+export type SurveyResponse = {
+  id: string
+  survey_id: string
+  submitted_at: string
+  reward_status: string
+}
+
+/** メールアドレスからアンケート回答履歴を取得 */
+export async function getSurveyResponsesByEmail(email: string): Promise<SurveyResponse[]> {
+  const { data, error } = await getAdminSupabase()
+    .from("survey_responses")
+    .select("id, survey_id, submitted_at, reward_status")
+    .eq("email", email)
+    .order("submitted_at", { ascending: false })
+    .limit(20)
+
+  if (error) { console.error("getSurveyResponsesByEmail:", error); return [] }
+  return (data ?? []) as SurveyResponse[]
+}
+
 /** Discord ID から unified_user を取得 */
 export async function getUserByDiscordId(discordId: string) {
   const { data, error } = await getAdminSupabase()

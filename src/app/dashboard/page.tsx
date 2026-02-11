@@ -2,8 +2,8 @@ import { getUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import SignOutButton from "./SignOutButton"
 import LinkWixForm from "./LinkWixForm"
-import { getUserByEmail } from "@/lib/supabase"
-import { getContactByEmail, getLoyaltyByContactId, getMemberByContactId, getActiveSubscriptions, getAllSubscriptions, type WixSubscription } from "@/lib/wix"
+import { getUserByEmail, getSurveyResponsesByEmail, type SurveyResponse } from "@/lib/supabase"
+import { getContactByEmail, getLoyaltyByContactId, getLoyaltyTransactions, getMemberByContactId, getActiveSubscriptions, getAllSubscriptions, type WixSubscription, type LoyaltyTx } from "@/lib/wix"
 import { SUPERUSER_EMAILS } from "@/lib/constants"
 import Link from "next/link"
 
@@ -28,12 +28,18 @@ export default async function Dashboard() {
   } | null = null
   let activeSubscriptions: WixSubscription[] = []
   let allSubscriptions: WixSubscription[] = []
+  let surveyResponses: SurveyResponse[] = []
+  let loyaltyTxs: LoyaltyTx[] = []
+  let loyaltyAccountId: string | null = null
 
   try {
     if (email) {
       const unifiedUser = await getUserByEmail(email)
       unifiedUserId = unifiedUser?.id ?? null
       discordLinked = !!unifiedUser?.discord_id
+
+      // アンケート回答履歴を取得
+      surveyResponses = await getSurveyResponsesByEmail(email)
 
       if (unifiedUser?.wix_contact_id) {
         wixLinked = true
@@ -42,6 +48,10 @@ export default async function Dashboard() {
         const loyalty = await getLoyaltyByContactId(unifiedUser.wix_contact_id)
         if (loyalty?.points) {
           points = loyalty.points.balance ?? 0
+        }
+        if (loyalty?._id) {
+          loyaltyAccountId = loyalty._id
+          loyaltyTxs = await getLoyaltyTransactions(loyalty._id)
         }
 
         // プロフィール・サブスクリプション取得
@@ -69,6 +79,10 @@ export default async function Dashboard() {
           const loyalty = await getLoyaltyByContactId(contact._id)
           if (loyalty?.points) {
             points = loyalty.points.balance ?? 0
+          }
+          if (loyalty?._id) {
+            loyaltyAccountId = loyalty._id
+            loyaltyTxs = await getLoyaltyTransactions(loyalty._id)
           }
           const member = await getMemberByContactId(contact._id)
           if (member) {
@@ -226,6 +240,55 @@ export default async function Dashboard() {
             </div>
           </div>
 
+          {/* Survey Responses */}
+          {surveyResponses.length > 0 && (
+            <div className="card animate-in-delay-2" style={{ padding: 20 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>アンケート回答履歴</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {surveyResponses.map((r) => (
+                  <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{r.survey_id}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                        {new Date(r.submitted_at).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <RewardBadge status={r.reward_status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loyalty Transactions */}
+          {loyaltyTxs.length > 0 && (
+            <div className="card animate-in-delay-2" style={{ padding: 20 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>ポイント履歴</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {loyaltyTxs.map((tx) => (
+                  <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "4px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+                        {tx.description || tx.type}
+                      </span>
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+                        {tx.createdDate ? new Date(tx.createdDate).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                      </span>
+                    </div>
+                    <span style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      fontVariantNumeric: "tabular-nums",
+                      color: tx.type === "EARN" || tx.type === "ADJUST" ? "var(--aicu-teal)" : tx.type === "REDEEM" ? "#ef4444" : "var(--text-secondary)",
+                    }}>
+                      {tx.type === "REDEEM" || tx.type === "EXPIRE" ? "-" : "+"}{tx.amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Subscription History (superuser only) */}
           {isSuperuser && allSubscriptions.length > 0 && (
             <div className="card animate-in-delay-2" style={{ padding: 20, border: "1px solid rgba(99, 102, 241, 0.15)" }}>
@@ -298,6 +361,21 @@ export default async function Dashboard() {
         <p>&copy; 2026 AICU Japan Inc.</p>
       </footer>
     </main>
+  )
+}
+
+function RewardBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; bg: string; color: string }> = {
+    confirmed: { label: "謝礼済", bg: "rgba(65, 201, 180, 0.12)", color: "var(--aicu-teal)" },
+    pending: { label: "処理中", bg: "rgba(245, 158, 11, 0.1)", color: "#f59e0b" },
+    failed: { label: "エラー", bg: "rgba(239, 68, 68, 0.08)", color: "#ef4444" },
+    none: { label: "回答済", bg: "rgba(0, 0, 0, 0.04)", color: "var(--text-tertiary)" },
+  }
+  const s = map[status] || map.none
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4, background: s.bg, color: s.color, whiteSpace: "nowrap" }}>
+      {s.label}
+    </span>
   )
 }
 

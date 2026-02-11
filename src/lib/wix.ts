@@ -1,6 +1,6 @@
 import { createClient, ApiKeyStrategy } from "@wix/sdk"
 import { members } from "@wix/members"
-import { accounts } from "@wix/loyalty"
+import { accounts, transactions } from "@wix/loyalty"
 import { orders, plans } from "@wix/pricing-plans"
 import * as contactsPublic from "@wix/contacts/build/cjs/src/contacts-v4-contact.public"
 
@@ -18,6 +18,7 @@ function getWixClient() {
         contacts: contactsPublic,
         members,
         accounts,
+        transactions,
         orders,
         plans,
       },
@@ -114,6 +115,37 @@ export async function getSubscriptionStats() {
   }
 
   return { total: allOrders.length, byPlanAndStatus }
+}
+
+// ─── Loyalty transaction types ───
+export type LoyaltyTx = {
+  id: string
+  amount: number
+  type: string // EARN, REDEEM, ADJUST, REFUND, EXPIRE
+  description: string
+  createdDate: string | null
+}
+
+/** accountId からポイント取引履歴を取得（最新20件） */
+export async function getLoyaltyTransactions(accountId: string): Promise<LoyaltyTx[]> {
+  try {
+    const result = await getWixClient().transactions.queryLoyaltyTransactions()
+      .eq("accountId", accountId)
+      .descending("_createdDate")
+      .limit(20)
+      .find()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (result.items || []).map((t: any) => ({
+      id: t._id ?? "",
+      amount: t.amount ?? 0,
+      type: t.transactionType ?? "UNKNOWN",
+      description: t.description ?? "",
+      createdDate: t._createdDate ? new Date(t._createdDate).toISOString() : null,
+    }))
+  } catch (e) {
+    console.error("[wix] getLoyaltyTransactions error:", e)
+    return []
+  }
 }
 
 /** contactId から Loyalty アカウント（ポイント情報）を取得 */

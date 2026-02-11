@@ -2,33 +2,70 @@
 
 ## 概要
 
-**Point, Profile, Post** - AICU会員ポータル & APIバックエンド
+**Poll, Point, Profile, Post** — AICU データ管理 & APIバックエンド
 
 - URL: `p.aicu.jp`（Vercel）
-- 目的: AICUポイント管理、メール認証、Wix会員連携、サブスクリプション管理、管理者ダッシュボード
+- 目的: **アンケート入力・回答管理（Poll）**、AICUポイント管理、個人情報管理、Wix会員連携、管理者ダッシュボード
 
-## アーキテクチャ
+## 3サイト アーキテクチャにおける位置づけ（2026-02-11 確定）
 
 ```
-┌─────────────────────────────┐     ┌─────────────────────────────┐
-│  app-aicujp (フロントエンド)   │     │  p-aicujp (本プロジェクト)     │
-│  aicu.jp · Cloudflare Pages  │────▶│  p.aicu.jp · Vercel          │
-│                              │     │                              │
-│  React SPA (Vite + JSX)     │     │  Next.js 15 (App Router)     │
-│  クライアントのみ             │     │  サーバーサイド処理            │
-│  Supabase Auth (anon key)   │     │  Supabase Auth (magic link)  │
-│  UI表示・RSS取得             │     │  Wix SDK (API Key認証)       │
-└─────────────────────────────┘     │  Supabase (service key)      │
-                                    │  Web Push (VAPID)            │
-                                    │  Slack Webhook               │
-                                    └─────────────────────────────┘
+aicu.jp (app-aicujp)             p.aicu.jp (本プロジェクト)        u.aicu.jp (u-aicujp)
+┌──────────────────────┐      ┌──────────────────────┐       ┌──────────────────────┐
+│ モバイルポータル        │      │ Poll・データ管理       │       │ パーソナル・ポートフォリオ│
+│ スマホ最適化           │      │ アンケート入力UI       │       │ PC最適化              │
+│ 新規ユーザー獲得       │─POST→│ survey_responses     │←GET──│ 調査結果ビジュアライズ   │
+│ ブランディング中枢     │      │ 個人情報管理          │       │ データ販売/マッチング    │
+│ React SPA (Vite)      │←JSON─│ 報酬/ポイントAPI      │       │ CreatorViz (Recharts)  │
+│ CF Pages              │      │ Wix同期・設定ページ    │       │ Next.js 16 + TS        │
+└──────────────────────┘      │ Slack通知            │       │ Vercel                 │
+                               │ Next.js (App Router)  │       └──────────────────────┘
+                               │ Vercel                │
+                               └──────────────────────┘
+                                        │
+                               Supabase (共有: auyqabzjljmcefymxwgn)
 ```
+
+### p.aicu.jp の役割（拡張）
+
+| 機能カテゴリ | 内容 | 状態 |
+|:---|:---|:---|
+| **Poll** | アンケート入力 UI、survey_responses 保存、Google Form 二重送信 | app-aicujp から移行予定 |
+| **Point** | AICUポイント残高表示（Wix Loyalty API）、報酬付与 | 実装済み / API 拡張予定 |
+| **Profile** | プロフィール管理、Wix 同期設定ページ | Phase B 設計済み |
+| **Post** | コミュニティ告知 | Phase 3（未実装） |
+| **Data** | CSV/JSON エクスポート、結果集計 API | 予定 |
 
 ### なぜ分離するか
 
 - **Wix SDK** (`@wix/sdk`, `@wix/contacts`, `@wix/members`, `@wix/loyalty`, `@wix/pricing-plans`) はサーバーサイド専用。API Key をクライアントに露出できない
 - **unified_users** テーブル操作には Supabase service key が必要
 - app-aicujp は Vite SPA（クライアントのみ）なのでこれらを直接扱えない
+- ユーザーに **Wix の存在を見せない**。Wix はバックエンド同期のみ
+
+### Wix → Supabase 移行方針
+
+Wix は段階的に Supabase へ移行する。当面は「Wix-primary, Supabase override」方式:
+
+1. **表示優先度**: Supabase profiles → Wix Member → フォールバック
+2. **Phase A（現在）**: 「設定」リンクのみ追加。settings ページは次タスク
+3. **Phase B（次回）**: `/dashboard/settings` ページ作成
+   - Wix の値をプレースホルダーとして表示
+   - ユーザーが編集 → Supabase profiles テーブルに保存
+   - `/api/profile/update` を拡張して DOB 以外のフィールドも対応
+4. **Phase C**: ダッシュボードの displayName 計算を変更
+   - 現在: `wixProfile?.nickname ?? wixProfile?.firstName ?? ...`
+   - 変更後: `supabaseProfile?.display_name ?? wixProfile?.nickname ?? ...`
+
+### 新規 API エンドポイント（予定）
+
+| エンドポイント | メソッド | 用途 | 優先度 |
+|:---|:---|:---|:---|
+| `/api/surveys/:id/results` | GET | アンケート集計結果（JSON） | 高 |
+| `/api/surveys/:id/export` | GET | CSV/JSON エクスポート | 高 |
+| `/api/rewards/grant` | POST | ポイント報酬付与 | 中 |
+| `/api/member/profile` | GET | Wix+Supabase 統合プロフィール | 中 |
+| `/api/member/points` | GET | AICUポイント残高 | 中 |
 
 ## 認証フロー
 
@@ -226,11 +263,12 @@ Wix 会員数、Supabase テーブル、GA4タグ、API認証などを自動チ�
 
 ## 関連リポジトリ
 
-| リポジトリ | 関係 | 備考 |
-|:---|:---|:---|
-| **app-aicujp** | フロントエンドSPA | aicu.jp (Cloudflare Pages) |
-| **japan-corp** | 経営管理 | Issue #124 で管理 |
-| **aicu-ai** | メインサービス | コーポレートサイト |
+| リポジトリ | 役割 | URL | 備考 |
+|:---|:---|:---|:---|
+| **app-aicujp** | モバイルポータル | aicu.jp (CF Pages) | スマホ最適化、新規ユーザー獲得、ブランディング中枢 |
+| **u-aicujp** | パーソナル・ポートフォリオ | u.aicu.jp (Vercel) | 調査結果可視化、データ販売、PC向け。Neon→Supabase 移行中 |
+| **japan-corp** | 経営管理 | — | Issue #124 で管理 |
+| **aicu-ai** | コーポレートサイト | aicu.ai | — |
 
 ## GitHub Issues
 
