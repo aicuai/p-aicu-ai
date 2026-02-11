@@ -144,14 +144,14 @@ export default async function Dashboard() {
               {points !== null ? points.toLocaleString() : "---"}
               <span style={{ fontSize: 15, fontWeight: 400, marginLeft: 4, opacity: 0.8 }}>pt</span>
             </p>
-            {!wixLinked && (
-              <p style={{ fontSize: 12, opacity: 0.6, marginTop: 8 }}>Wix 未連携（メールアドレスが一致すると自動連携されます）</p>
-            )}
           </div>
 
           {/* Profile */}
           <div className="card animate-in-delay" style={{ padding: 20 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>プロフィール</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>プロフィール</h2>
+              <Link href="/dashboard/settings" style={{ fontSize: 12, color: "var(--aicu-teal)", textDecoration: "none" }}>設定</Link>
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <ProfileRow label="名前" value={displayName} />
               {wixProfile?.company && <ProfileRow label="会社" value={wixProfile.company} />}
@@ -160,11 +160,41 @@ export default async function Dashboard() {
                 label="Discord"
                 value={discordLinked ? "連携済み" : "未連携"}
                 valueColor={discordLinked ? "#34c759" : "#ff9500"}
-              />
-              <ProfileRow
-                label="Wix"
-                value={wixLinked ? "連携済み" : "未連携"}
-                valueColor={wixLinked ? "#34c759" : "#ff9500"}
+                actions={
+                  <>
+                    <a
+                      href="https://j.aicu.ai/JoinDiscord"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        background: "#5865F2",
+                        color: "#fff",
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      参加
+                    </a>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: 4,
+                        background: "rgba(0,0,0,0.04)",
+                        color: "var(--text-tertiary)",
+                        cursor: "not-allowed",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      連携
+                    </span>
+                  </>
+                }
               />
             </div>
           </div>
@@ -199,7 +229,10 @@ export default async function Dashboard() {
           {/* Subscription History (superuser only) */}
           {isSuperuser && allSubscriptions.length > 0 && (
             <div className="card animate-in-delay-2" style={{ padding: 20, border: "1px solid rgba(99, 102, 241, 0.15)" }}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#6366f1", marginBottom: 12 }}>サブスクリプション履歴</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: "#6366f1", marginBottom: 4 }}>サブスクリプション履歴</h2>
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 12, fontFamily: "monospace" }}>
+                {email ?? "---"}
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {allSubscriptions.map((sub, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13, padding: "4px 0", borderBottom: i < allSubscriptions.length - 1 ? "1px solid var(--border)" : "none" }}>
@@ -231,57 +264,27 @@ export default async function Dashboard() {
                   <LinkWixForm />
                 </div>
               )}
+              <Link
+                href="/dashboard/admin"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: 16,
+                  padding: "10px 14px",
+                  borderRadius: 8,
+                  background: "linear-gradient(135deg, var(--aicu-teal), var(--aicu-teal-dark))",
+                  color: "#fff",
+                  textDecoration: "none",
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                <span>管理者ダッシュボード</span>
+                <span style={{ fontSize: 12, opacity: 0.85 }}>Admin →</span>
+              </Link>
             </div>
           )}
-
-          {/* Admin Dashboard Link */}
-          {isSuperuser && (
-            <Link
-              href="/dashboard/admin"
-              className="card card-hover animate-in-delay-3"
-              style={{ padding: 20, display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}
-            >
-              <div>
-                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>管理者ダッシュボード</h2>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>KPI・ユーザー統計</p>
-              </div>
-              <span style={{
-                padding: "6px 14px",
-                background: "linear-gradient(135deg, var(--aicu-teal), var(--aicu-teal-dark))",
-                color: "#fff",
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 600,
-              }}>
-                Admin
-              </span>
-            </Link>
-          )}
-
-          {/* Discord Community */}
-          <a
-            href="https://j.aicu.ai/JoinDiscord"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="card card-hover animate-in-delay-3"
-            style={{ padding: 20, display: "flex", alignItems: "center", justifyContent: "space-between", textDecoration: "none" }}
-          >
-            <div>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>Discord</h2>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 2 }}>コミュニティに参加する</p>
-            </div>
-            <span style={{
-              padding: "6px 14px",
-              background: "#5865F2",
-              color: "#fff",
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              boxShadow: "0 2px 8px rgba(88, 101, 242, 0.2)",
-            }}>
-              参加
-            </span>
-          </a>
         </div>
       </div>
 
@@ -311,11 +314,14 @@ function SubStatusBadge({ status }: { status: string }) {
   )
 }
 
-function ProfileRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+function ProfileRow({ label, value, valueColor, actions }: { label: string; value: string; valueColor?: string; actions?: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
       <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-      <span style={{ color: valueColor ?? "var(--text-primary)", fontWeight: valueColor ? 500 : 400 }}>{value}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ color: valueColor ?? "var(--text-primary)", fontWeight: valueColor ? 500 : 400 }}>{value}</span>
+        {actions}
+      </div>
     </div>
   )
 }
