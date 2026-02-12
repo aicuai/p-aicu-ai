@@ -70,7 +70,7 @@ export default function PolicyPage() {
             </p>
             <p style={{ marginTop: 8 }}>
               連絡先:{" "}
-              <a href="mailto:R2602@aicu.jp" style={{ color: "#0031D8", textDecoration: "underline", fontWeight: 600 }}>
+              <a href="mailto:R2602@aicu.jp?subject=Optout%3AR2602&body=https%3A%2F%2Fp.aicu.jp%2Fq%2FR2602%2Fpolicy" style={{ color: "#0031D8", textDecoration: "underline", fontWeight: 600 }}>
                 R2602@aicu.jp
               </a>
             </p>
