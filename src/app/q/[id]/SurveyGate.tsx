@@ -126,42 +126,37 @@ export default function SurveyGate({ surveyId, config, email }: Props) {
             </span>
             <span style={{ fontSize: 17, fontWeight: 600, color: "#1a1a2e" }}>Research</span>
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.4, marginBottom: 8, color: "#1a1a2e" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.4, marginBottom: 8, color: "#1a1a2e" }}>
             {config.title}
-          </h1>
+          </h2>
           {config.description && (
             <p style={{ fontSize: 15, color: "#666", lineHeight: 1.6 }}>{config.description}</p>
           )}
         </div>
 
-        {/* Meta info */}
+        {/* Info block */}
         <div style={{
-          display: "flex", justifyContent: "center", gap: 24, marginBottom: 16,
-          fontSize: 14, color: "#999",
+          padding: "16px 20px", borderRadius: 16, marginBottom: 24,
+          background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
+          fontSize: 13, color: "#888", lineHeight: 2,
         }}>
-          {config.estimatedMinutes && (
-            <span>約{config.estimatedMinutes}分</span>
-          )}
-          {config.reward && (
-            <span>報酬: {config.reward}</span>
-          )}
-        </div>
-
-        {/* R2511 + DCAJ */}
-        <div style={{
-          textAlign: "center", marginBottom: 28, fontSize: 13, color: "#888", lineHeight: 1.8,
-        }}>
+          {config.estimatedMinutes && <div>所要時間: 約{config.estimatedMinutes}分</div>}
+          {config.reward && <div>報酬: {config.reward}</div>}
           <div>
             前回調査結果:{" "}
-            <a href="https://u.aicu.jp/r/R2511" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>
-              R2511
-            </a>
+            <a href="https://u.aicu.jp/r/R2511" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>R2511</a>
+          </div>
+          <div>
+            結果速報の例:{" "}
+            <a href="/q/R2602/results" style={{ color: BLUE, textDecoration: "underline" }}>R2602 速報ページ</a>
+          </div>
+          <div>
+            データ利用方針:{" "}
+            <a href="/q/R2602/policy" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>p.aicu.jp/q/R2602/policy</a>
           </div>
           <div>
             調査協力:{" "}
-            <a href="https://www.dcaj.or.jp/" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>
-              一般財団法人デジタルコンテンツ協会
-            </a>
+            <a href="https://www.dcaj.or.jp/" target="_blank" rel="noopener" style={{ color: BLUE, textDecoration: "underline" }}>一般財団法人デジタルコンテンツ協会</a>
             {" "}(DCAJ)
           </div>
         </div>

@@ -190,7 +190,7 @@ function Bot({ text, typing, canGoBack, onGoBack }) {
         whiteSpace: "pre-line",
       }}>
         <span style={{ fontSize: 12, fontWeight: 700, color: s.teal, marginRight: 6 }}>Q</span>
-        {typing ? <Typing /> : text}
+        {typing ? <Typing /> : renderWithLinks(text)}
         {canGoBack && <div style={{ fontSize: 11, color: "rgba(65,201,180,0.6)", marginTop: 4 }}>← タップで戻る</div>}
       </div>
     </div>

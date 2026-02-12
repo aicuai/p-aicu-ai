@@ -107,16 +107,17 @@ export default function ResultsClient() {
       </div>
 
       {/* Notice */}
-      {data?.hasTestData !== false && (
-        <div style={{
-          maxWidth: 720, margin: "16px auto 0", padding: "12px 20px",
-          background: "#FFF8E1", border: "1px solid #FFE082", borderRadius: 8,
-          fontSize: 13, color: "#6D4C00", lineHeight: 1.7,
-        }}>
-          <p style={{ margin: 0, fontWeight: 600 }}>こちらは速報（テスト入力を含みます）</p>
-          <p style={{ margin: "4px 0 0" }}>個人情報に当たるデータは含まれておりません。アンケート参加後は最新の本番データをみることができます。</p>
-        </div>
-      )}
+      <div style={{
+        maxWidth: 720, margin: "16px auto 0", padding: "12px 20px",
+        background: "#FFF8E1", border: "1px solid #FFE082", borderRadius: 8,
+        fontSize: 13, color: "#6D4C00", lineHeight: 1.7,
+      }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>本データはアンケート参加前のプレビューです</p>
+        <p style={{ margin: "4px 0 0" }}>
+          アンケート参加後には実データが表示されます。
+          {" "}<a href="/q/R2602?utm_source=results&utm_medium=banner&utm_campaign=R2602" style={{ color: "#0031D8", fontWeight: 600 }}>アンケートに参加する</a>
+        </p>
+      </div>
 
       {/* Share bar */}
       <div style={{ maxWidth: 720, margin: "12px auto 0", textAlign: "center" }}>

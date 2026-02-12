@@ -39,27 +39,30 @@ export default async function Home() {
         </div>
 
         {/* R2602 Survey Banner */}
-        <a href="/q/R2602" style={{ textDecoration: "none", display: "block", marginBottom: 20 }}>
-          <div className="card animate-in-delay" style={{
-            padding: "16px 20px",
-            background: "linear-gradient(135deg, rgba(0,49,216,0.04), rgba(65,201,180,0.06))",
-            border: "1px solid rgba(0,49,216,0.12)",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.5, marginBottom: 6 }}>
+        <div className="card animate-in-delay" style={{
+          padding: "16px 20px", marginBottom: 20,
+          background: "linear-gradient(135deg, rgba(0,49,216,0.04), rgba(65,201,180,0.06))",
+          border: "1px solid rgba(0,49,216,0.12)",
+        }}>
+          <a href="/q/R2602" style={{ textDecoration: "none", display: "block" }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.5, margin: "0 0 6px" }}>
               生成AI時代の&quot;つくる人&quot;調査 2026.02
-            </div>
+            </h2>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 8 }}>
               あなたの創造が、AIと社会をつなぐデータになる。<br />
               所要時間：約5分 / 匿名回答 / 10,000 AICUポイント贈呈
             </div>
-            <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.6 }}>
-              前回調査結果: <span style={{ color: "#0031D8" }}>R2511</span><br />
-              調査協力: <span style={{ color: "var(--text-secondary)" }}>一般財団法人デジタルコンテンツ協会（DCAJ）</span>
-            </div>
+          </a>
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.8 }}>
+            <a href="/q/R2602/results" style={{ color: "#0031D8", textDecoration: "none" }}>結果速報の例</a>
+            {" / "}
+            <a href="/q/R2602/policy" style={{ color: "var(--text-tertiary)", textDecoration: "none" }}>データ利用方針</a>
+            <br />
+            前回調査結果: <a href="https://u.aicu.jp/r/R2511" target="_blank" rel="noopener" style={{ color: "#0031D8", textDecoration: "none" }}>R2511</a>
+            {" / "}
+            調査協力: <span style={{ color: "var(--text-secondary)" }}>一般財団法人デジタルコンテンツ協会（DCAJ）</span>
           </div>
-        </a>
+        </div>
 
         {/* Login Card */}
         <div className="card animate-in-delay" style={{ padding: 24 }}>
