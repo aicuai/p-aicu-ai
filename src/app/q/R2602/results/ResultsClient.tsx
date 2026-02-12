@@ -35,7 +35,9 @@ export default function ResultsClient() {
   useEffect(() => {
     fetch("/api/surveys/R2602/results")
       .then((r) => r.json())
-      .then((d) => setData(d))
+      .then((d) => {
+        if (d && Array.isArray(d.questions)) setData(d)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])

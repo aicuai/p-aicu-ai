@@ -17,14 +17,27 @@ const CHOICE_TYPES = new Set(["single_choice", "multi_choice", "dropdown"])
 
 export async function GET() {
   const db = getAdminSupabase()
-  const { data: rows, error } = await db
+  // Try with is_test filter; fallback without it if column doesn't exist yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let rows: { answers: Record<string, any> }[] | null = null
+  const { data: d1, error: e1 } = await db
     .from("survey_responses")
     .select("answers")
     .eq("survey_id", "R2602")
     .neq("is_test", true)
 
-  if (error) {
-    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })
+  if (e1) {
+    // is_test column may not exist yet — retry without filter
+    const { data: d2, error: e2 } = await db
+      .from("survey_responses")
+      .select("answers")
+      .eq("survey_id", "R2602")
+    if (e2) {
+      return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })
+    }
+    rows = d2
+  } else {
+    rows = d1
   }
 
   const totalResponses = rows?.length ?? 0
