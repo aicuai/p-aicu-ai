@@ -34,9 +34,32 @@ export default async function Home() {
             </span>
           </h1>
           <p style={{ marginTop: 6, fontSize: 14, color: "var(--text-secondary)" }}>
-            Point &middot; Profile &middot; Post
+            Point &middot; Profile &middot; Privacy
           </p>
         </div>
+
+        {/* R2602 Survey Banner */}
+        <a href="/q/R2602" style={{ textDecoration: "none", display: "block", marginBottom: 20 }}>
+          <div className="card animate-in-delay" style={{
+            padding: "16px 20px",
+            background: "linear-gradient(135deg, rgba(0,49,216,0.04), rgba(65,201,180,0.06))",
+            border: "1px solid rgba(0,49,216,0.12)",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.5, marginBottom: 6 }}>
+              生成AI時代の&quot;つくる人&quot;調査 2026.02
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 8 }}>
+              あなたの創造が、AIと社会をつなぐデータになる。<br />
+              所要時間：約5分 / 匿名回答 / 10,000 AICUポイント贈呈
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.6 }}>
+              前回調査結果: <span style={{ color: "#0031D8" }}>R2511</span><br />
+              調査協力: <span style={{ color: "var(--text-secondary)" }}>一般財団法人デジタルコンテンツ協会（DCAJ）</span>
+            </div>
+          </div>
+        </a>
 
         {/* Login Card */}
         <div className="card animate-in-delay" style={{ padding: 24 }}>
@@ -60,8 +83,8 @@ export default async function Home() {
         <div className="animate-in-delay-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 24 }}>
           {[
             { icon: "\uD83C\uDFAF", title: "Point", desc: "ポイント確認" },
-            { icon: "\uD83D\uDC64", title: "Profile", desc: "会員情報" },
-            { icon: "\uD83D\uDCE2", title: "Post", desc: "お知らせ" },
+            { icon: "\uD83D\uDC64", title: "Profile", desc: "アンケート" },
+            { icon: "\u2764\uFE0F", title: "Privacy", desc: "会員情報" },
           ].map((f) => (
             <div
               key={f.title}
