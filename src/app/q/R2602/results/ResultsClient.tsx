@@ -58,6 +58,16 @@ export default function ResultsClient() {
         )}
       </div>
 
+      {/* Notice */}
+      <div style={{
+        maxWidth: 720, margin: "16px auto 0", padding: "12px 20px",
+        background: "#FFF8E1", border: "1px solid #FFE082", borderRadius: 8,
+        fontSize: 13, color: "#6D4C00", lineHeight: 1.7,
+      }}>
+        <p style={{ margin: 0, fontWeight: 600 }}>こちらは速報（テスト入力）です</p>
+        <p style={{ margin: "4px 0 0" }}>個人情報に当たるデータは含まれておりません。アンケート参加後は最新のデータをみることができます。</p>
+      </div>
+
       {/* Content */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "20px 16px 60px" }}>
         {loading ? (

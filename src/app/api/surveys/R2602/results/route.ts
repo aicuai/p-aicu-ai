@@ -21,6 +21,7 @@ export async function GET() {
     .from("survey_responses")
     .select("answers")
     .eq("survey_id", "R2602")
+    .neq("is_test", true)
 
   if (error) {
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })
