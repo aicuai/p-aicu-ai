@@ -7,9 +7,16 @@ type SignInAction = (formData: FormData) => Promise<{ error: string } | void>
 export default function LoginForm({ signInAction }: { signInAction: SignInAction }) {
   const [state, formAction, isPending] = useActionState(
     async (_prev: { error: string } | null, formData: FormData) => {
-      const result = await signInAction(formData)
-      if (result && "error" in result) return result
-      return null
+      try {
+        const result = await signInAction(formData)
+        if (result && typeof result === "object" && "error" in result && result.error) {
+          return { error: String(result.error) }
+        }
+        return null
+      } catch {
+        // redirect() throws — let it propagate by returning null
+        return null
+      }
     },
     null,
   )
