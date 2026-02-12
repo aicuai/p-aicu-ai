@@ -12,9 +12,21 @@ export async function generateMetadata({ params }: Props) {
   const config = getSurveyConfig(id)
   if (!config) return { title: "Not Found" }
   const resolved = await config
+  const ogImage = id === "R2602" ? "https://p.aicu.jp/ogp/R2602.png" : undefined
   return {
     title: `${resolved.title} | AICU Research`,
     description: resolved.description,
+    openGraph: {
+      title: `${resolved.title} | AICU Research`,
+      description: resolved.description ?? "",
+      ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630 }] }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${resolved.title} | AICU Research`,
+      description: resolved.description ?? "",
+      ...(ogImage && { images: [ogImage] }),
+    },
   }
 }
 
