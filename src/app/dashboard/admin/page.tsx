@@ -25,6 +25,8 @@ export default async function AdminDashboard() {
     profilesResult,
     pushSubsResult,
     recentLoginsResult,
+    surveyCountResult,
+    surveyLatestResult,
   ] = await Promise.all([
     admin.from("unified_users").select("id", { count: "exact", head: true }),
     admin.from("unified_users").select("id", { count: "exact", head: true }).not("wix_contact_id", "is", null),
@@ -36,6 +38,8 @@ export default async function AdminDashboard() {
     admin.from("profiles").select("id", { count: "exact", head: true }),
     admin.from("push_subscriptions").select("user_id", { count: "exact", head: true }),
     admin.from("unified_users").select("primary_email, last_login_at, wix_contact_id, discord_id").order("last_login_at", { ascending: false, nullsFirst: false }).limit(10),
+    admin.from("survey_responses").select("id", { count: "exact", head: true }),
+    admin.from("survey_responses").select("survey_id, email, submitted_at").order("submitted_at", { ascending: false }).limit(5),
   ])
 
   const totalUsers = unifiedResult.count ?? 0
@@ -70,6 +74,8 @@ export default async function AdminDashboard() {
   const wauMauRatio = safeRate(login7d, login30d)
 
   const recentLogins = recentLoginsResult.data ?? []
+  const surveyCount = surveyCountResult.count ?? 0
+  const surveyLatest = (surveyLatestResult.data ?? []) as { survey_id: string; email: string | null; submitted_at: string }[]
 
   return (
     <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -186,6 +192,36 @@ export default async function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {/* Survey Responses */}
+          <div className="card animate-in-delay-3" style={{ padding: 20 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
+              調査回答 <span style={{ fontSize: 12, fontWeight: 400, color: "var(--text-tertiary)" }}>（survey_responses）</span>
+            </h2>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 12 }}>
+              <span style={{ color: "var(--text-secondary)" }}>総回答数</span>
+              <span style={{ fontWeight: 700, fontSize: 20, color: "var(--text-primary)" }}>{surveyCount}</span>
+            </div>
+            {surveyLatest.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 2 }}>最新のエントリー</div>
+                {surveyLatest.map((row, i) => {
+                  const emailPrefix = row.email ? row.email.split("@")[0] : "—"
+                  return (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, padding: "4px 0", borderBottom: i < surveyLatest.length - 1 ? "1px solid var(--border)" : "none" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(0,49,216,0.08)", color: "#0031D8" }}>{row.survey_id}</span>
+                        <span style={{ fontFamily: "monospace", color: "var(--text-primary)" }}>{emailPrefix}@***</span>
+                      </div>
+                      <span style={{ color: "var(--text-tertiary)", fontSize: 11 }}>
+                        {row.submitted_at ? new Date(row.submitted_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Recent Logins */}
           <div className="card animate-in-delay-3" style={{ padding: 20 }}>

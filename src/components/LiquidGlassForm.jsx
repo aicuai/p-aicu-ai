@@ -99,6 +99,8 @@ async function submitSurvey(config, answers, email) {
   }
   // Custom API submission
   if (config.submitUrl) {
+    // Use form email field as fallback if initialEmail is empty
+    const effectiveEmail = email || answers["entry_1243761143"] || undefined;
     try {
       await fetch(config.submitUrl, {
         method: "POST",
@@ -107,7 +109,7 @@ async function submitSurvey(config, answers, email) {
           surveyId: config.sourceUrl || config.title,
           answers,
           submittedAt: new Date().toISOString(),
-          email: email || undefined,
+          email: effectiveEmail,
         }),
       });
     } catch { /* network error — ignore for now */ }

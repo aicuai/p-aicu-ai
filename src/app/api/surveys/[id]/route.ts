@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAdminSupabase } from "@/lib/supabase"
 import { createHash } from "crypto"
+import { notifySlackDev } from "@/lib/slack"
 
 const WIX_REWARD_WEBHOOK_URL = process.env.WIX_REWARD_WEBHOOK_URL || ""
 
@@ -65,6 +66,13 @@ export async function POST(
   if (email) {
     triggerReward(surveyId, email, 10000).catch(() => {})
   }
+
+  // Slack dev notification (fire-and-forget)
+  const emailPrefix = email ? email.split("@")[0] : "anonymous"
+  const questionCount = Object.keys(answers).length
+  notifySlackDev(
+    `[Survey] ${surveyId} 回答保存: ${emailPrefix}@*** (${questionCount}問)`
+  ).catch(() => {})
 
   return NextResponse.json({ ok: true })
 }
