@@ -70,8 +70,8 @@ export default function PolicyPage() {
             </p>
             <p style={{ marginTop: 8 }}>
               連絡先:{" "}
-              <a href="mailto:japan@aicu.ai" style={{ color: "#0031D8", textDecoration: "underline", fontWeight: 600 }}>
-                japan@aicu.ai
+              <a href="mailto:R2602@aicu.jp" style={{ color: "#0031D8", textDecoration: "underline", fontWeight: 600 }}>
+                R2602@aicu.jp
               </a>
             </p>
           </Section>

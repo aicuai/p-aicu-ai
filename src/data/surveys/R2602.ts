@@ -12,7 +12,7 @@ export const R2602_CONFIG: SurveyConfig = {
   questions: [
     // ── 同意 ──
     { id: "section_intro", type: "section", title: '生成AI時代の"つくる人"調査 2026.02', description: "あなたの創造が、AIと社会をつなぐデータになる。\n所要時間：約5分 / 匿名回答 / 10,000 AICUポイント贈呈\n\n前回調査結果: https://u.aicu.jp/r/R2511\n調査協力: 一般財団法人デジタルコンテンツ協会（DCAJ）\nhttps://www.dcaj.or.jp/privacy/" },
-    { id: "entry_1127213393", entryId: 1127213393, type: "single_choice", question: "本調査結果のデータ利用方針についてご同意いただけますか？\nhttps://p.aicu.jp/q/policy", required: true, options: ["同意する","同意しない"] },
+    { id: "entry_1127213393", entryId: 1127213393, type: "single_choice", question: "本調査結果のデータ利用方針についてご同意いただけますか？\nhttps://p.aicu.jp/q/R2602/policy", required: true, options: ["同意する","同意しない"] },
 
     // ── 基本情報 ──
     { id: "section_basic", type: "section", title: "あなたの基本情報" },
